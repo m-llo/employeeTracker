@@ -56,4 +56,23 @@ INSERT INTO department (id, dept_name) values (700, 'Information Technology');
 INSERT INTO department (id, dept_name) values (800, 'Sales');
 INSERT INTO department (id, dept_name) values (900, 'Executive');
 
+INSERT INTO employee (first_name, last_name, job_title, manager) values ('Aaron','Burr', 'Sales Representative',"Joe Jackson");
+INSERT INTO employee (first_name, last_name, job_title, manager) values ('Joe','Jackson','Sales Manager','Larry Bird');
+INSERT INTO employee (first_name, last_name, job_title, manager) values ('Chris','Kringle','Marketing Specialist','Obe Trice');
+INSERT INTO employee (first_name, last_name, job_title, manager) values ('Obe','Trice','Marketing Director','Scooby Doo');
+INSERT INTO employee (first_name, last_name, job_title, manager) values ('Lisa','Simpson','Accountant','Brittany Spears');
+INSERT INTO employee (first_name, last_name, job_title, manager) values ('Brittany','Spears','Accounting Director','Scooby Doo');
+INSERT INTO employee (first_name, last_name, job_title, manager) values ('Lloyd','Banks','Financial Analyst','Sandra Bullock');
+INSERT INTO employee (first_name, last_name, job_title, manager) values ('Sandra','Bullock','Finance Manager','Scooby Doo');
+INSERT INTO employee (first_name, last_name, job_title, manager) values ('Ertha','Kitt','Operations Coordinator','Action Jackson');
+INSERT INTO employee (first_name, last_name, job_title, manager) values ('Action','Jackson','Operations Director','Scooby Doo');
+INSERT INTO employee (first_name, last_name, job_title, manager) values ('Rocky','Balboa','Attorney','Aaliyah Houghton');
+INSERT INTO employee (first_name, last_name, job_title, manager) values ('Aaliyah','Houghton','General Council','Scooby Doo');
+INSERT INTO employee (first_name, last_name, job_title, manager) values ('Scooby','Doo','Executive Officer');
 
+
+
+
+SELECT employee.first_name, employee.last_name, employee.manager, roles.title, roles.salary, department.dept_name
+FROM((roles INNER JOIN employee ON roles.title = employee.job_title)
+ INNER JOIN department ON roles.department = department.dept_name)
