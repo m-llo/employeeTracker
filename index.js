@@ -42,13 +42,13 @@ const welcome = () => {
                     response = addDepartment();
                     break;
                 case 'View Employee':
-                    response = viewEmployee();
+                    response = search();
                     break;
                 case 'View Roles':
-                    response = viewRoles();
+                    response = search();
                     break;
                 case 'View Departments':
-                    response = viewDepartments();
+                    response = search();
                     break;
                 case 'Update Employee':
                     response = updateEmployee();
@@ -131,8 +131,9 @@ const addEmployee = () =>{
             manager: answer.emp_manager,
             
           },
-          (err) => {
+          (err, res) => {
             if (err) throw err;
+            console.log("Employee successfully added.")
           })
     });
 
@@ -173,8 +174,9 @@ const addRole = () => {
                  salary: answer.role_salary,
                  department: answer.role_department,
                },
-               (err) => {
+               (err, res) => {
                  if (err) throw err;
+                 console.log("Role successfully created.")
                })
         })
 };
@@ -200,17 +202,79 @@ const addDepartment = () => {
                     id: answer.dept_id,
                     name: answer.dept_name,
                },
-               (err) => {
+               (err, res) => {
                  if (err) throw err;
+                 console.log("Department successfully created.")
                })
         })
 };
 
-const viewEmployee = () => {};
+const search = () => {
+    inquirer
+    .prompt([
+        {
+        name: 'searchemp',
+        type: 'list',
+        message: 'What would you like to view?',
+        choices: ['View all employees', 'View employees by manager', 'View all roles', 'View all departments']
+        },
+    ])
+    .then((answer) => {
+        switch (answer.searchemp){
+            case 'View all employees':
+            allEmployees();
+            break;
 
-const viewRoles = () => {};
+            case 'View employees by manager':
+            employeesByManager();
+            break;
 
-const viewDepartments = () => {};
+            case 'View all roles':
+            viewRoles();
+            break;
+
+            case 'View all departments':
+            viewDepartments();
+            break;
+            
+            default:
+            console.log(`Invalid action: ${answer.searchemp}`)
+
+        }
+    })
+
+
+};
+const allEmployees = () =>{ 
+    connection.query('SELECT * FROM employee', (err, res) => {
+             if (err) throw err;
+            // post res using console.table 
+           })
+    };
+
+const employeesByManager = () => {
+    const query =
+    'SELECT * FROM employee GROUP BY manager';
+  connection.query(query, (err, res) => {
+    if (err) throw err;
+    //  post employee using console.table);
+    welcome();
+  });
+};
+
+const viewRoles = () => {
+    connection.query('SELECT * FROM roles', (err, res) => {
+        if (err) throw err;
+       // post res using console.table 
+      })
+};
+
+const viewDepartments = () => {
+    connection.query('SELECT * FROM departments', (err, res) => {
+        if (err) throw err;
+       // post res using console.table 
+      })
+};
 
 const updateEmployee = () => {};
 
