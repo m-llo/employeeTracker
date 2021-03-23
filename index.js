@@ -1,6 +1,6 @@
 const mysql = require('mysql');
 const inquirer = require('inquirer');
-const cTable = require('console.table');
+const table = require('console.table');
 
 
 // create the connection information for the sql database
@@ -25,9 +25,9 @@ const welcome = () => {
     FROM((roles INNER JOIN employee ON roles.title = employee.job_title)
      INNER JOIN department ON roles.department = department.dept_name)`
 
-     connection.query(query, (err, res) => {
+    connection.query(query, (err, res) => {
         if (err) throw err;
-        console.table([res]);
+        table([res]);
     });
     inquirer
         .prompt({
@@ -64,7 +64,7 @@ const welcome = () => {
                 case 'Update Roles':
                     response = updateRecord();
                     break;
-                 case 'Update Department':
+                case 'Update Department':
                     response = updateRecord();
                     break;
                 case 'Delete Record':
@@ -262,7 +262,7 @@ const search = () => {
 const allEmployees = () => {
     connection.query('SELECT * FROM employee', (err, res) => {
         if (err) throw err;
-        console.table([res])
+        table([res])
     })
     welcome()
 };
@@ -272,7 +272,7 @@ const employeesByManager = () => {
         'SELECT * FROM employee GROUP BY manager';
     connection.query(query, (err, res) => {
         if (err) throw err;
-        console.table([res])
+        table([res])
 
     });
     welcome();
@@ -281,7 +281,7 @@ const employeesByManager = () => {
 const viewRoles = () => {
     connection.query('SELECT * FROM roles', (err, res) => {
         if (err) throw err;
-        console.table([res]);
+        table([res]);
     })
     welcome();
 };
@@ -289,7 +289,7 @@ const viewRoles = () => {
 const viewDepartments = () => {
     connection.query('SELECT * FROM departments', (err, res) => {
         if (err) throw err;
-        console.table([res]);
+        table([res]);
     })
     welcome();
 };
@@ -323,57 +323,57 @@ const updateRecord = () => {
             };
         });
 
-        welcome();
+    welcome();
 };
 const updateEmployee = () => {
     inquirer
-    .prompt([
-        {
-            name: 'firstname',
-            type: 'input',
-            message: 'What is the first name of the employee you would you like to update?'
-        },
-        {
-            name: 'lastname',
-            type: 'input',
-            message: 'What is the last name of the employee you would you like to update?'
-        },
-        {
-            name: 'updatetype',
-            type: 'list',
-            message: 'What would you like to update?',
-            choices: ['first_name', 'last_name','job_title', 'manager',],
-        },
-        {
-            name: 'updateinfo',
-            type: 'input',
-            message: 'Enter the new information.',
-        },
-    ])
-    .then((answer) => {
-    const query = `UPDATE employee SET ${answer.updatetype} = ${answer.updateinfo} WHERE ?`
-    //  first_name = ${answer.firstname} last_name = ${answer.lastname}
-    connection.query(query,
-        
-        [
+        .prompt([
             {
-                first_name : answer.firstname,
-                last_name : answer.lastname
+                name: 'firstname',
+                type: 'input',
+                message: 'What is the first name of the employee you would you like to update?'
             },
-        ], 
-    (err, res) => {
-        if (err) throw err;
-        console.table(`${res.affectedRows} record updated!\n`);
-    });
-    });
+            {
+                name: 'lastname',
+                type: 'input',
+                message: 'What is the last name of the employee you would you like to update?'
+            },
+            {
+                name: 'updatetype',
+                type: 'list',
+                message: 'What would you like to update?',
+                choices: ['first_name', 'last_name', 'job_title', 'manager',],
+            },
+            {
+                name: 'updateinfo',
+                type: 'input',
+                message: 'Enter the new information.',
+            },
+        ])
+        .then((answer) => {
+            const query = `UPDATE employee SET ${answer.updatetype} = ${answer.updateinfo} WHERE ?`
+            //  first_name = ${answer.firstname} last_name = ${answer.lastname}
+            connection.query(query,
+
+                [
+                    {
+                        first_name: answer.firstname,
+                        last_name: answer.lastname
+                    },
+                ],
+                (err, res) => {
+                    if (err) throw err;
+                    table(`${res.affectedRows} record updated!\n`);
+                });
+        });
     welcome();
 };
 
 const updateRoles = () => {
     inquirer
-    .prompt([
-        {
-            name: 'role',
+        .prompt([
+            {
+                name: 'role',
                 type: 'rawlist',
                 message: "Select the role you would like to update.",
                 choices() {
@@ -383,41 +383,41 @@ const updateRoles = () => {
                     });
                     return roleChoiceArray
                 }
-        },
-        {
-            name: 'updatetype',
-            type: 'list',
-            message: 'What would you like to update?',
-            choices: ['title', 'department','salary'],
-        },
-        {
-            name: 'updateinfo',
-            type: 'input',
-            message: 'Enter the new information.',
-        },
-    ])
-    .then((answer) => {
-    const query = `UPDATE roles SET ${answer.updatetype} = ${answer.updateinfo} WHERE ?`
-    //  first_name = ${answer.firstname} last_name = ${answer.lastname}
-    connection.query(query,
-        
-        [
-            {
-                role : answer.role,
             },
-        ], 
-    (err, res) => {
-        if (err) throw err;
-        console.table(`${res.affectedRows} record updated!\n`);
-    });
-    })
+            {
+                name: 'updatetype',
+                type: 'list',
+                message: 'What would you like to update?',
+                choices: ['title', 'department', 'salary'],
+            },
+            {
+                name: 'updateinfo',
+                type: 'input',
+                message: 'Enter the new information.',
+            },
+        ])
+        .then((answer) => {
+            const query = `UPDATE roles SET ${answer.updatetype} = ${answer.updateinfo} WHERE ?`
+            //  first_name = ${answer.firstname} last_name = ${answer.lastname}
+            connection.query(query,
+
+                [
+                    {
+                        role: answer.role,
+                    },
+                ],
+                (err, res) => {
+                    if (err) throw err;
+                    table(`${res.affectedRows} record updated!\n`);
+                });
+        })
     welcome();
 };
 const updateDepartment = () => {
     inquirer
-    .prompt([
-        {
-            name: 'department',
+        .prompt([
+            {
+                name: 'department',
                 type: 'rawlist',
                 message: "Select the role you would like to update.",
                 choices() {
@@ -427,84 +427,89 @@ const updateDepartment = () => {
                     });
                     return deptChoiceArray
                 }
-        },
-        {
-            name: 'updatetype',
-            type: 'list',
-            message: 'What would you like to update?',
-            choices: ['id', 'dept_name'],
-        },
-        {
-            name: 'updateinfo',
-            type: 'input',
-            message: 'Enter the new information.',
-        },
-    ])
-    .then((answer) => {
-    const query = `UPDATE department SET ${answer.updatetype} = ${answer.updateinfo} WHERE ?`
-    //  first_name = ${answer.firstname} last_name = ${answer.lastname}
-    connection.query(query,
-        
-        [
-            {
-                dept_name : answer.department,
             },
-        ], 
-    (err, res) => {
-        if (err) throw err;
-        console.table(`${res.affectedRows} record updated!\n`);
-    });
-    })
+            {
+                name: 'updatetype',
+                type: 'list',
+                message: 'What would you like to update?',
+                choices: ['id', 'dept_name'],
+            },
+            {
+                name: 'updateinfo',
+                type: 'input',
+                message: 'Enter the new information.',
+            },
+        ])
+        .then((answer) => {
+            const query = `UPDATE department SET ${answer.updatetype} = ${answer.updateinfo} WHERE ?`
+            //  first_name = ${answer.firstname} last_name = ${answer.lastname}
+            connection.query(query,
+
+                [
+                    {
+                        dept_name: answer.department,
+                    },
+                ],
+                (err, res) => {
+                    if (err) throw err;
+                    table(`${res.affectedRows} record updated!\n`);
+                });
+        })
     welcome()
 };
 
-const deleteRecord = () => { 
-inquirer
-    .prompt([
-        {
-            name: 'deletetype',
-            type: 'list',
-            message: 'What would you like to delete?',
-            choices: ['employee', 'role','department',],
-        },
-        {
-            name: 'firstname',
-            type: 'input',
-            message: 'What is the first name of the employee you would you like to update?'
-        },
-        {
-            name: 'lastname',
-            type: 'input',
-            message: 'What is the last name of the employee you would you like to update?'
-        },
-        {
-            name: 'updatetype',
-            type: 'list',
-            message: 'What would you like to update?',
-            choices: ['first_name', 'last_name','job_title', 'manager',],
-        },
-        {
-            name: 'updateinfo',
-            type: 'input',
-            message: 'Enter the new information.',
-        },
-    ])
-    .then((answer) => {
-    const query = `UPDATE employee SET ${answer.updatetype} = ${answer.updateinfo} WHERE ?`
-    //  first_name = ${answer.firstname} last_name = ${answer.lastname}
-    connection.query(query,
-        
-        [
+const deleteRecord = () => {
+    inquirer
+        .prompt([
             {
-                first_name : answer.firstname,
-                last_name : answer.lastname
+                name: 'deletetype',
+                type: 'list',
+                message: 'What would you like to delete?',
+                choices: ['Employee', 'roles', 'Department',],
             },
-        ], 
-    (err, res) => {
-        if (err) throw err;
-        console.table(`${res.affectedRows} record updated!\n`);
-    });
-    });
+            {
+                name: 'deletewhere',
+                type: 'list',
+                message: 'Select how you would like to identify the record to delete. Delete Employee records by [id], roles by [title], or departments by [dept_name]?',
+                choices: ['id', 'title', 'dept_name',],
+            },
+            {
+                name: 'deletewhat',
+                type: 'input',
+                message: 'Enter the information you would like to delete.'
+            },
+        ])
+        .then((answer) => {
+            switch (answer.deletetype) {
+                case 'Employee':
+                    response`DELETE FROM employee Where${answer.deletewhere}=`
+                    break;
+
+                case 'Roles':
+                    response`DELETE FROM roles Where${answer.deletewhere}=`
+                    break;
+
+                case 'Department':
+                    response`DELETE FROM department Where${answer.deletewhere}=`
+                    break;
+
+                default:
+                    console.log(`Invalid action: cannot delete ${answer.deletetype} by ${answer.deletewhere}`);
+
+                    return response
+
+            };
+
+            //  first_name = ${answer.firstname} last_name = ${answer.lastname}
+            console.log(response);
+            const deleteWhat = answer.deletewhat;
+            const query = response;
+            connection.query(query`${deleteWhat}`,
+                (err, res) => {
+                    if (err) throw err;
+                    table(`${res.affectedRows} record deleted!\n`);
+                });
+        });
     welcome();
 
 };
@@ -516,4 +521,4 @@ connection.connect((err) => {
     if (err) throw err;
     console.log(`connected as id ${connection.threadId}\n`);
     welcome();
-  });
+});
