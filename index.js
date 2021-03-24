@@ -351,7 +351,11 @@ const updateEmployee = () => {
              let updateinfo = answer.updateinfo;
             const query = `UPDATE employee SET ${updatefield} =  ${updateinfo} WHERE ?`
             connection.query(query,
-                [{id: answer.id,}],
+                [{
+                        updatefield: updateinfo
+
+
+                },{id: answer.id,}],
                  async (err, res) => {
                     if (err) throw err;
                     await console.table(`${res.affectedRows} record updated!\n`);
@@ -464,42 +468,34 @@ const deleteRecord = () => {
                 name: 'deletetype',
                 type: 'list',
                 message: 'What would you like to delete?',
-                choices: ['Employee', 'roles', 'Department',],
-            },
-            {
-                name: 'deletewhere',
-                type: 'list',
-                message: 'Select how you would like to identify the record to delete. Delete Employee records by [id], roles by [title], or departments by [dept_name]?',
-                choices: ['id', 'title', 'dept_name',],
+                choices: ['Employee record', 'Roles', 'Department',],
             },
             {
                 name: 'deletewhat',
                 type: 'input',
-                message: 'Enter the information you would like to delete.'
+                message: 'Enter the employee id, role title, or department name you would like to delete.'
             },
         ])
         .then((answer) => {
+            let query;
             switch (answer.deletetype) {
-                case 'Employee':
-                    response `DELETE FROM employee Where${answer.deletewhere}=${answer.deletewhat}`
+                case 'Employee record':
+                    query = `DELETE FROM employee WHERE id = ${answer.deletewhat}`
                     break;
 
                 case 'Roles':
-                    response `DELETE FROM roles Where${answer.deletewhere}=${answer.deletewhat}`
+                    query = `DELETE FROM roles WHERE title = ${answer.deletewhat}`
                     break;
 
                 case 'Department':
-                    response `DELETE FROM department Where${answer.deletewhere}=${answer.deletewhat}`
+                    query = `DELETE FROM department WHERE dept_name = ${answer.deletewhat}`
                     break;
 
                 default:
-                    console.log(`Invalid action: cannot delete ${answer.deletetype} by ${answer.deletewhere}`);
-
-                    return response
+                    console.log(`Invalid action: cannot delete ${answer.deletetype} by that method`);
 
             };
-            console.log(response);
-            const query = response;
+            console.log(query);
             connection.query(query,
               async  (err, res) => {
                     if (err) throw err;
