@@ -2,6 +2,9 @@ const mysql = require('mysql');
 const inquirer = require('inquirer');
 const cTable = require('console.table');
 const ascii = require('ascii-art');
+const {updateEmployee, updateRoles, updateDepartment} = require('./update');
+const {addEmployee, addRole, addDepartment} = require('./add');
+
 
 
 // create the connection information for the sql database
@@ -20,8 +23,9 @@ const connection = mysql.createConnection({
     database: 'emp_trackerdb',
 });
 
+
 const welcome = () => {
-    //    time permitting enter graphic
+   
 
     inquirer
         .prompt([
@@ -240,73 +244,75 @@ const viewRecord = () => {
                 name: 'searchemp',
                 type: 'list',
                 message: 'What would you like to view?',
-                choices: ['View all employees', 'View employees by manager', 'View all roles', 'View all departments']
+                choices: ['View all employees', 'View all roles', 'View all departments']
             },
         ])
         .then((answer) => {
+            let query;
             switch (answer.searchemp) {
-                case 'View all employees':
-                    allEmployees();
-                    break;
-
-                case 'View employees by manager':
-                    employeesByManager();
+                case 'View employees':
+                    viewEmployees();
                     break;
 
                 case 'View all roles':
-                    viewRoles();
+                    query = 'SELECT * FROM roles'
                     break;
 
                 case 'View all departments':
-                    viewDepartments();
+                    query = 'SELECT * FROM department'
                     break;
 
                 default:
                     console.log(`Invalid action: ${answer.searchemp}`)
 
             }
+            console.log(query);
+            connection.query(query, async (err, res) => {
+                if (err) throw err;
+                console.log(res);
+                await console.table(res);
+                await welcome();
+            });
+        });
+};
+const viewEmployees = async () => {
+    await inquirer
+        .prompt([
+            {
+                name: 'viewemp',
+                type: 'list',
+                message: 'How would you like to view employees?',
+                choices: ['All employees', 'All by manager', 'All by job title']
+            },
+        ]).then((answer) => {
+            let query;
+            switch (answer.viewemp) {
+                case 'All employees':
+                    query = 'SELECT * FROM employee'
+                    break;
+
+                case 'All by manager':
+                    query = 'SELECT * FROM employee GROUP BY manager'
+                    break;
+
+                case 'All by Job title':
+                    query = 'SELECT * FROM employee GROUP BY manager'
+                    break;
+
+                default:
+                    console.log(`Invalid action: cannot view all employees by that method`);
+            };
+            console.log(query);
+            connection.query(query, async (err, res) => {
+                if (err) throw err;
+                console.log(res);
+                await console.table(res);
+                await welcome();
+            });
         })
-
-
-};
-const allEmployees = () => {
-    connection.query('SELECT * FROM employee', async (err, res) => {
-        if (err) throw err;
-        console.log(res);
-        await console.table(res);
-        await welcome();
-    })
-
 };
 
-const employeesByManager = () => {
-    const query =
-        'SELECT * FROM employee GROUP BY manager';
-    connection.query(query, async (err, res) => {
-        if (err) throw err;
-        await console.table(res)
-        await welcome();
-    });
 
-};
-
-const viewRoles = () => {
-    connection.query('SELECT * FROM roles', async (err, res) => {
-        if (err) throw err;
-        await console.table(res);
-        await welcome();
-    });
-
-};
-
-const viewDepartments = () => {
-    connection.query('SELECT * FROM department', async (err, res) => {
-        if (err) throw err;
-        await console.table(res);
-        await welcome();
-    })
-
-};
 const updateRecord = () => {
     inquirer
         .prompt([
@@ -551,6 +557,7 @@ const deleteRecord = () => {
 
 
 connection.connect((err) => {
+    //    time permitting enter graphic
     if (err) throw err;
     console.log(`connected as id ${connection.threadId}\n`);
     const query = `SELECT employee.id, employee.first_name, employee.last_name, employee.manager, roles.title, roles.salary, department.dept_name
