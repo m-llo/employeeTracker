@@ -1,26 +1,14 @@
 const cTable = require('console.table');
 const connection = require('./connection');
 const inquirer = require('inquirer');
+ 
+   
 
 
-connection.query(query, async (err, res) => {
-        if (err) throw err;
-        await console.table(res);
-        welcome();
-    });
-
-const displayAll = () =>{
-    connection.connect((err) => {
-        if (err) throw err;
-        console.log(`connected as id ${connection.threadId}\n`);
-        const query = `SELECT employee.id, employee.first_name, employee.last_name, employee.manager, roles.title, roles.salary, department.dept_name
-        FROM((roles INNER JOIN employee ON roles.title = employee.job_title)
-         INNER JOIN department ON roles.department = department.dept_name)`
-        });
-}
+    
 
 const welcome = () => {
-    inquirer
+        inquirer
         .prompt([
             {
                 name: 'options',
@@ -149,14 +137,15 @@ const addEmployee = async () => {
                 (err, res) => {
                     if (err) throw err;
                     console.log("Employee successfully added.")
-
+                    welcome()
                 });
-           
-            welcome()
+              
+            
         });
 
     } catch (error) { console.log(error) };
-
+  
+    
 };
 
 
@@ -203,10 +192,9 @@ const addRole = async () => {
                 }],
                 (err, res) => {
                     if (err) throw err;
-                    await console.log("Role successfully created.")
-
+                   
                 })
-            
+            await console.log("Role successfully created.")
             welcome()
         });
 
@@ -567,11 +555,11 @@ const deleteRecord = async () => {
                 break;
 
             case 'Roles':
-                query = `DELETE FROM roles WHERE title = ${deleteWhat}`
+                query = `DELETE FROM roles WHERE title = '${deleteWhat}'`
                 break;
 
             case 'Department':
-                query = `DELETE FROM department WHERE dept_name = ${deleteWhat}`
+                query = `DELETE FROM department WHERE dept_name = '${deleteWhat}'`
                 break;
 
             default:
@@ -592,3 +580,17 @@ const deleteRecord = async () => {
 };
 
 
+  connection.connect((err)  => {
+    if (err) throw err;
+    console.log(`connected as id ${connection.threadId}\n`);
+    const query = `SELECT employee.id, employee.first_name, employee.last_name, employee.manager, roles.title, roles.salary, department.dept_name
+    FROM((roles INNER JOIN employee ON roles.title = employee.job_title)
+     INNER JOIN department ON roles.department = department.dept_name)`
+    connection.query(query, async (err, res) => {
+        if (err) throw err;
+        await console.table(res);
+        await welcome();
+    });
+   
+});
+   

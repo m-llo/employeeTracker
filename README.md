@@ -23,3 +23,8 @@ I've also included the ability to:
 As a business owner
 I want to be able to view and manage the departments, roles, and employees in my company
 So that I can organize and plan my business
+
+## Links
+[video](https://drive.google.com/file/d/1HWgLzi2LzDJJRDl4WEPygehs0NMY0wcs/view)
+
+[Repo](https://github.com/m-llo/employeeTracker)
