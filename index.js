@@ -1,39 +1,32 @@
-const mysql = require('mysql');
-const inquirer = require('inquirer');
 const cTable = require('console.table');
-const ascii = require('ascii-art');
-const {updateEmployee, updateRoles, updateDepartment} = require('./update');
-const {addEmployee, addRole, addDepartment} = require('./add');
+const connection = require('./connection');
+const inquirer = require('inquirer');
 
 
+connection.query(query, async (err, res) => {
+        if (err) throw err;
+        await console.table(res);
+        welcome();
+    });
 
-// create the connection information for the sql database
-const connection = mysql.createConnection({
-    multipleStatements: true,
-    host: 'localhost',
-
-    // Your port; if not 3306
-    port: 3306,
-
-    // Your username
-    user: 'root',
-
-    // Your password
-    password: 'crownjewel07',
-    database: 'emp_trackerdb',
-});
-
+const displayAll = () =>{
+    connection.connect((err) => {
+        if (err) throw err;
+        console.log(`connected as id ${connection.threadId}\n`);
+        const query = `SELECT employee.id, employee.first_name, employee.last_name, employee.manager, roles.title, roles.salary, department.dept_name
+        FROM((roles INNER JOIN employee ON roles.title = employee.job_title)
+         INNER JOIN department ON roles.department = department.dept_name)`
+        });
+}
 
 const welcome = () => {
-   
-
     inquirer
         .prompt([
             {
                 name: 'options',
                 type: 'rawlist',
                 message: 'What would you like to do?',
-                choices: ['Add Record', 'View Record', 'Update Record', 'Delete Record', 'EXIT',],
+                choices: ['Add Record', 'View Records', 'Update Record', 'Delete Record', 'EXIT',],
             }
         ]).then((answer) => {
 
@@ -41,8 +34,8 @@ const welcome = () => {
                 case 'Add Record':
                     response = addRecord();
                     break;
-                case 'View Record':
-                    response = viewRecord();
+                case 'View Records':
+                    response = viewRecords();
                     break;
                 case 'Update Record':
                     response = updateRecord();
@@ -72,7 +65,7 @@ const addRecord = () => {
             },
         ])
         .then((answer) => {
-            switch (answer.updaterec) {
+            switch (answer.addrec) {
                 case 'Employee Record':
                     addEmployee();
                     break;
@@ -86,124 +79,140 @@ const addRecord = () => {
                     break;
 
                 default:
-                    console.log(`Invalid action: ${answer.updaterec}`)
+                    console.log(`Invalid action: ${answer.addrec}`)
 
             };
         });
 
 };
-
-const addEmployee = () => {
-    connection.query('SELECT * FROM department, roles', async (err, results) => {
-        if (err) throw err;
-        await inquirer
-            .prompt([
-                {
-                    name: 'emp_firstname',
-                    type: 'input',
-                    message: 'Enter the first name of the employee.',
-                },
-                {
-                    name: 'emp_lastname',
-                    type: 'input',
-                    message: 'Enter the last name of the employee.',
-                },
-                {
-                    name: 'emp_role',
-                    type: 'rawlist',
-                    message: "Select the employee's role.",
-                    choices() {
-                        const roleChoiceArray = [];
-                        results.forEach(({ title }) => {
-                            roleChoiceArray.push(title);
-                        });
-                        let uniqueRoleChoice = [...new Set(roleChoiceArray)]
-                        return uniqueRoleChoice
-                    }
-                },
-                {
-                    name: 'emp_manager',
-                    type: 'input',
-                    message: "Enter the managers first and last name",
-                },
-                {
-                    name: 'emp_department',
-                    type: 'rawlist',
-                    message: "Select the employee's department.",
-                    choices() {
-                        const deptChoiceArray = [];
-                        results.forEach(({ dept_name }) => {
-                            deptChoiceArray.push(dept_name);
-                        });
-                        let uniqueDeptChoice = [...new Set(deptChoiceArray)]
-                        return uniqueDeptChoice
-                    }
-                },
-            ])
-            .then((answer) => {
-                connection.query(
-                    'INSERT INTO employee SET?',
+const addEmployee = async () => {
+    try {
+        connection.query('SELECT * FROM department, roles', async (err, results) => {
+            if (err) throw err;
+            const getChoice = await inquirer
+                .prompt([
                     {
-                        first_name: answer.emp_firstname,
-                        last_name: answer.emp_lastname,
-                        job_title: answer.emp_role,
-                        manager: answer.emp_manager,
-
+                        name: 'emp_firstname',
+                        type: 'input',
+                        message: 'Enter the first name of the employee.',
                     },
-                    (err, res) => {
-                        if (err) throw err;
-                        console.log("Employee successfully added.")
-                    });
-            });
-        await welcome();
-    });
+                    {
+                        name: 'emp_lastname',
+                        type: 'input',
+                        message: 'Enter the last name of the employee.',
+                    },
+                    {
+                        name: 'emp_role',
+                        type: 'rawlist',
+                        message: "Select the employee's role.",
+                        choices() {
+                            const roleChoiceArray = [];
+                            results.forEach(({ title }) => {
+                                roleChoiceArray.push(title);
+                            });
+                            let uniqueRoleChoice = [...new Set(roleChoiceArray)]
+                            return uniqueRoleChoice
+                        }
+                    },
+                    {
+                        name: 'emp_manager',
+                        type: 'input',
+                        message: "Enter the managers first and last name",
+                    },
+                    {
+                        name: 'emp_department',
+                        type: 'rawlist',
+                        message: "Select the employee's department.",
+                        choices() {
+                            const deptChoiceArray = [];
+                            results.forEach(({ dept_name }) => {
+                                deptChoiceArray.push(dept_name);
+                            });
+                            let uniqueDeptChoice = [...new Set(deptChoiceArray)]
+                            return uniqueDeptChoice
+                        }
+                    },
+                ])
+            console.log(getChoice)
+            const firstName = getChoice.emp_firstname;
+            const lastName = getChoice.emp_lastname;
+            const jobTitle = getChoice.emp_role;
+            const manager = getChoice.emp_manager;
+            await connection.query('INSERT INTO employee SET?',
+                [{
+                    first_name: firstName,
+                    last_name: lastName,
+                    job_title: jobTitle,
+                    manager: manager,
+
+                }],
+                (err, res) => {
+                    if (err) throw err;
+                    console.log("Employee successfully added.")
+
+                });
+           
+            welcome()
+        });
+
+    } catch (error) { console.log(error) };
+
 };
 
 
-const addRole = () => {
-    connection.query('SELECT * FROM department', async (err, results) => {
-        if (err) throw err;
-        await inquirer
-            .prompt([
-                {
-                    name: 'role_name',
-                    type: 'input',
-                    message: 'What is the name of the role?',
-                },
-                {
-                    name: 'role_salary',
-                    type: 'input',
-                    message: 'What is the base Salary for this role?',
-                },
-                {
-                    name: 'role_department',
-                    type: 'rawlist',
-                    message: "What department is this role in?",
-                    choices() {
-                        const deptChoiceArray = [];
-                        results.forEach(({ dept_name }) => {
-                            deptChoiceArray.push(dept_name);
-                        });
-                        let uniqueDeptChoice = [...new Set(deptChoiceArray)]
-                        return uniqueDeptChoice
-                    }
-                },
-            ])
-            .then((answer) => {
-                connection.query(
-                    'INSERT INTO roles SET?',
+const addRole = async () => {
+    try {
+        connection.query('SELECT * FROM department', async (err, results) => {
+            if (err) throw err;
+            const getChoice = await inquirer
+                .prompt([
                     {
-                        title: answer.role_name,
-                        salary: answer.role_salary,
-                        department: answer.role_department,
+                        name: 'role_name',
+                        type: 'input',
+                        message: 'What is the name of the role?',
                     },
-                    (err, res) => {
-                        if (err) throw err;
-                        console.log("Role successfully created.")
-                    })
-            })
-        await welcome();
-    });
+                    {
+                        name: 'role_salary',
+                        type: 'input',
+                        message: 'What is the base Salary for this role?',
+                    },
+                    {
+                        name: 'role_department',
+                        type: 'rawlist',
+                        message: "What department is this role in?",
+                        choices() {
+                            const deptChoiceArray = [];
+                            results.forEach(({ dept_name }) => {
+                                deptChoiceArray.push(dept_name);
+                            });
+                            let uniqueDeptChoice = [...new Set(deptChoiceArray)]
+                            return uniqueDeptChoice
+                        }
+                    },
+                ])
+            console.log(getChoice)
+            const role = getChoice.role_name;
+            const salary = getChoice.role_salary
+            const department = getChoice.role_department;
+            await connection.query(
+                'INSERT INTO roles SET?',
+                [{
+                    title: role,
+                    salary: salary,
+                    department: department,
+                }],
+                (err, res) => {
+                    if (err) throw err;
+                    await console.log("Role successfully created.")
+
+                })
+            
+            welcome()
+        });
+
+
+    } catch (error) { console.log(error) }
+
 };
 
 const addDepartment = () => {
@@ -225,94 +234,18 @@ const addDepartment = () => {
                 'INSERT INTO department SET?',
                 {
                     id: answer.dept_id,
-                    name: answer.dept_name,
+                    dept_name: answer.dept_name,
                 },
 
                 async (err, res) => {
                     if (err) throw err;
                     await console.log("Department successfully created.")
-                    await welcome();
+                    
+                    welcome();
                 })
 
         });
 };
-
-const viewRecord = () => {
-    inquirer
-        .prompt([
-            {
-                name: 'searchemp',
-                type: 'list',
-                message: 'What would you like to view?',
-                choices: ['View all employees', 'View all roles', 'View all departments']
-            },
-        ])
-        .then((answer) => {
-            let query;
-            switch (answer.searchemp) {
-                case 'View employees':
-                    viewEmployees();
-                    break;
-
-                case 'View all roles':
-                    query = 'SELECT * FROM roles'
-                    break;
-
-                case 'View all departments':
-                    query = 'SELECT * FROM department'
-                    break;
-
-                default:
-                    console.log(`Invalid action: ${answer.searchemp}`)
-
-            }
-            console.log(query);
-            connection.query(query, async (err, res) => {
-                if (err) throw err;
-                console.log(res);
-                await console.table(res);
-                await welcome();
-            });
-        });
-};
-const viewEmployees = async () => {
-    await inquirer
-        .prompt([
-            {
-                name: 'viewemp',
-                type: 'list',
-                message: 'How would you like to view employees?',
-                choices: ['All employees', 'All by manager', 'All by job title']
-            },
-        ]).then((answer) => {
-            let query;
-            switch (answer.viewemp) {
-                case 'All employees':
-                    query = 'SELECT * FROM employee'
-                    break;
-
-                case 'All by manager':
-                    query = 'SELECT * FROM employee GROUP BY manager'
-                    break;
-
-                case 'All by Job title':
-                    query = 'SELECT * FROM employee GROUP BY manager'
-                    break;
-
-                default:
-                    console.log(`Invalid action: cannot view all employees by that method`);
-            };
-            console.log(query);
-            connection.query(query, async (err, res) => {
-                if (err) throw err;
-                console.log(res);
-                await console.table(res);
-                await welcome();
-            });
-        })
-};
-
-
 const updateRecord = () => {
     inquirer
         .prompt([
@@ -344,230 +277,318 @@ const updateRecord = () => {
         });
 
 };
+const updateEmployee = async () => {
+    try {
+        const getChoice = await inquirer
+            .prompt([
+                {
+                    name: 'firstname',
+                    type: 'input',
+                    message: 'What is the first name of the employee you would you like to update?'
+                },
+                {
+                    name: 'lastname',
+                    type: 'input',
+                    message: 'What is the last name of the employee you would you like to update?'
+                },
+                {
+                    name: 'updatefield',
+                    type: 'list',
+                    message: 'What field would you like to update?',
+                    choices: ['first_name', 'last_name', 'job_title', 'manager',],
+                },
+                {
+                    name: 'updatedinfo',
+                    type: 'input',
+                    message: 'Enter the new information.',
+                },
+            ])
+        console.log(getChoice)
+        let updateField = getChoice.updatefield;
+        let updatedInfo = getChoice.updatedinfo;
+        let firstName = getChoice.firstname;
+        let lastName = getChoice.lastname;
+        let query;
+        switch (updateField) {
+            case 'first_name':
+                query = `UPDATE employee SET first_name = '${updatedInfo}' WHERE (first_name, last_name)=('${firstName}','${lastName}')`
+                break;
 
-const updateEmployee = () => {
-    inquirer
-        .prompt([
-            {
-                name: 'firstname',
-                type: 'input',
-                message: 'What is the first name of the employee you would you like to update?'
-            },
-            {
-                name: 'lastname',
-                type: 'input',
-                message: 'What is the last name of the employee you would you like to update?'
-            },
-            {
-                name: 'updatefield',
-                type: 'list',
-                message: 'What field would you like to update?',
-                choices: ['first_name', 'last_name', 'job_title', 'manager',],
-            },
-            {
-                name: 'updatedinfo',
-                type: 'input',
-                message: 'Enter the new information.',
-            },
-        ])
-        .then((answer) => {
-            let updatedInfo = answer.updatedinfo;
-            let firstName = answer.firstname;
-            let lastName = answer.lastname;
-            let query;
-            switch (answer.updatefield) {
-                case 'first_name':
-                    query = `UPDATE employee SET first_name = '${updatedInfo}' WHERE (first_name, last_name)=('${firstName}','${lastName}')`
-                    break;
+            case 'last_name':
+                query = `UPDATE employee SET last_name = '${updatedInfo}' WHERE (first_name, last_name)=('${firstName}','${lastName}')`
+                break;
 
-                case 'last_name':
-                    query = `UPDATE employee SET last_name = '${updatedInfo}' WHERE (first_name, last_name)=('${firstName}','${lastName}')`
-                    break;
+            case 'job_title':
+                query = `UPDATE employee SET job_title = '${updatedInfo}' WHERE (first_name, last_name)=('${firstName}','${lastName}')`
+                break;
 
-                case 'job_title':
-                    query = `UPDATE employee SET job_title = '${updatedInfo}' WHERE (first_name, last_name)=('${firstName}','${lastName}')`
-                    break;
+            case 'manager':
+                query = `UPDATE employee SET manager = '${updatedInfo}' WHERE (first_name, last_name)=('${firstName}','${lastName}')`
+                break;
 
-                case 'manager':
-                    query = `UPDATE employee SET manager = '${updatedInfo}' WHERE (first_name, last_name)=('${firstName}','${lastName}')`
-                    break;
+            default:
+                console.log(`Invalid action: cannot update ${updateField} by that method`);
 
-                default:
-                    console.log(`Invalid action: cannot update ${answer.updatefield} by that method`);
-
-            };
-            console.log(query);
-            console.log(firstName);
-            console.log(lastName);
-            connection.query(query,
-                // [{id: answer.id,}],
-                async (err, res) => {
-                    if (err) throw err;
-                    await console.table(`${res.affectedRows} record updated!\n`);
-                    await welcome();
-                });
+        };
+        console.log(query);
+        console.log(firstName);
+        console.log(lastName);
+        connection.query(query, async (err, res) => {
+            if (err) throw err;
+            await console.table(`${res.affectedRows} record updated!\n`);
+            
+            welcome();
         });
+    } catch (error) { console.log(error) };
 };
 
-const updateRoles = () => {
-    connection.query('SELECT * FROM roles', async (err, results) => {
-        if (err) throw err;
-        await inquirer
-            .prompt([
-                {
-                    name: 'role',
-                    type: 'rawlist',
-                    message: "Select the role you would like to update.",
-                    choices() {
-                        const roleChoiceArray = [];
-                        results.forEach(({ title }) => {
-                            roleChoiceArray.push(title);
-                        });
-                        let uniqueRoleChoice = [...new Set(roleChoiceArray)]
-                        return uniqueRoleChoice
-                    }
-                },
-                {
-                    name: 'updatetype',
-                    type: 'list',
-                    message: 'What would you like to update?',
-                    choices: ['title', 'department', 'salary'],
-                },
-                {
-                    name: 'updateinfo',
-                    type: 'input',
-                    message: 'Enter the new information.',
-                },
-            ])
-            .then((answer) => {
-                const query = `UPDATE roles SET ${answer.updatetype} = '${answer.updateinfo}' WHERE ?`
-                console.log(query);
-                connection.query(query,
-
-                    [
-                        {
-                            title: answer.role,
-                        },
-                    ],
-                    async (err, res) => {
-                        if (err) throw err;
-                        await console.table(`${res.affectedRows} record updated!\n`);
-                        await welcome();
-                    });
-
+const updateRoles = async () => {
+    try {
+        connection.query('SELECT * FROM roles', async (err, results) => {
+            if (err) throw err;
+            const getChoice = await inquirer
+                .prompt([
+                    {
+                        name: 'role',
+                        type: 'rawlist',
+                        message: "Select the role you would like to update.",
+                        choices() {
+                            const roleChoiceArray = [];
+                            results.forEach(({ title }) => {
+                                roleChoiceArray.push(title);
+                            });
+                            let uniqueRoleChoice = [...new Set(roleChoiceArray)]
+                            return uniqueRoleChoice
+                        }
+                    },
+                    {
+                        name: 'updatetype',
+                        type: 'list',
+                        message: 'What would you like to update?',
+                        choices: ['title', 'department', 'salary'],
+                    },
+                    {
+                        name: 'updateinfo',
+                        type: 'input',
+                        message: 'Enter the new information.',
+                    },
+                ])
+            console.log(getChoice)
+            const updateType = getChoice.updatetype;
+            const updateInfo = getChoice.updateinfo;
+            const role = getChoice.role;
+            const query = `UPDATE roles SET ${updateType} = '${updateInfo}' WHERE ?`
+            console.log(query);
+            connection.query(query, [{ title: role }], async (err, res) => {
+                if (err) throw err;
+                await console.table(`${res.affectedRows} record updated!\n`);
+                
+                welcome();
             });
 
-    });
+        });
+    } catch (error) { console.log(error) };
 };
-const updateDepartment = () => {
-    connection.query('SELECT * FROM department', async (err, results) => {
-        if (err) throw err;
-        await inquirer
-            .prompt([
-                {
-                    name: 'department',
-                    type: 'rawlist',
-                    message: "Select the department you would like to update.",
-                    choices() {
-                        const deptChoiceArray = [];
-                        results.forEach(({ dept_name }) => {
-                            deptChoiceArray.push(dept_name);
-                        });
-                        let uniqueDeptChoice = [...new Set(deptChoiceArray)]
-                        return uniqueDeptChoice
-                    }
-                },
-                {
-                    name: 'updatetype',
-                    type: 'list',
-                    message: 'What would you like to update?',
-                    choices: ['id', 'dept_name'],
-                },
-                {
-                    name: 'updateinfo',
-                    type: 'input',
-                    message: 'Enter the new information.',
-                },
-            ])
-            .then((answer) => {
-                const query = `UPDATE department SET ${answer.updatetype} = '${answer.updateinfo}' WHERE ?`
-                console.log(query);
-                connection.query(query,
-
-                    [
-                        {
-                            dept_name: answer.department,
-                        },
-                    ],
-                    async (err, res) => {
-                        if (err) throw err;
-                        await console.table(`${res.affectedRows} record updated!\n`);
-                        await welcome();
-                    });
+const updateDepartment = async () => {
+    try {
+        connection.query('SELECT * FROM department', async (err, results) => {
+            if (err) throw err;
+            const getChoice = await inquirer
+                .prompt([
+                    {
+                        name: 'department',
+                        type: 'rawlist',
+                        message: "Select the department you would like to update.",
+                        choices() {
+                            const deptChoiceArray = [];
+                            results.forEach(({ dept_name }) => {
+                                deptChoiceArray.push(dept_name);
+                            });
+                            let uniqueDeptChoice = [...new Set(deptChoiceArray)]
+                            return uniqueDeptChoice
+                        }
+                    },
+                    {
+                        name: 'updatetype',
+                        type: 'list',
+                        message: 'What would you like to update?',
+                        choices: ['id', 'dept_name'],
+                    },
+                    {
+                        name: 'updateinfo',
+                        type: 'input',
+                        message: 'Enter the new information.',
+                    },
+                ])
+            console.log(getChoice)
+            const updateType = getChoice.updatetype;
+            const updateInfo = getChoice.updateinfo;
+            const department = getChoice.department;
+            const query = `UPDATE department SET ${updateType} = '${updateInfo}' WHERE ?`
+            console.log(query);
+            connection.query(query, [{ dept_name: department }], async (err, res) => {
+                if (err) throw err;
+                await console.table(`${res.affectedRows} record updated!\n`);
+               
+                welcome();
             });
-
-    });
+        });
+    } catch (error) { console.log(error) }
 };
-
-const deleteRecord = () => {
+const viewRecords = () => {
     inquirer
         .prompt([
             {
-                name: 'deletetype',
+                name: 'viewrec',
                 type: 'list',
-                message: 'What would you like to delete?',
-                choices: ['Employee record', 'Roles', 'Department',],
-            },
-            {
-                name: 'deletewhat',
-                type: 'input',
-                message: 'Enter the employee id, role title, or department name you would like to delete.'
+                message: 'What would you like to view?',
+                choices: ['Employee Record', 'Roles', 'Departments']
             },
         ])
         .then((answer) => {
-            let query;
-            switch (answer.deletetype) {
-                case 'Employee record':
-                    query = `DELETE FROM employee WHERE id = ${answer.deletewhat}`
+            switch (answer.viewrec) {
+                case 'Employee Record':
+                    viewEmployees();
                     break;
 
                 case 'Roles':
-                    query = `DELETE FROM roles WHERE title = ${answer.deletewhat}`
+                    viewRoles();
                     break;
 
-                case 'Department':
-                    query = `DELETE FROM department WHERE dept_name = ${answer.deletewhat}`
+                case 'Departments':
+                    viewDepartments();
                     break;
 
                 default:
-                    console.log(`Invalid action: cannot delete ${answer.deletetype} by that method`);
+                    console.log(`Invalid action: ${answer.viewrec}`)
 
             };
-            console.log(query);
-            connection.query(query,
-                async (err, res) => {
-                    if (err) throw err;
-                    await console.table(`${res.affectedRows} record deleted!\n`);
-                    await welcome();
-                });
         });
+
+};
+const viewRoles = async () => {
+    try {
+        const roles = await connection.query('SELECT * FROM roles', (err, res) => {
+            if (err) throw err;
+            console.table(res);
+            welcome()
+        })
+    } catch (error) {
+        console.log(err)
+    }
+
+};
+
+const viewDepartments = async () => {
+
+    try {
+        const roles = await connection.query('SELECT * FROM department', (err, res) => {
+            if (err) throw err;
+            console.table(res);
+            
+            welcome()
+        })
+    } catch (error) {
+        console.log(err)
+    }
+
+};
+
+const viewEmployees = async () => {
+    console.log("we called viewEmployees")
+    try {
+        const getChoice = await inquirer
+            .prompt([
+                {
+                    name: 'viewemp',
+                    type: 'list',
+                    message: 'How would you like to view employees?',
+                    choices: ['All employees', 'All by manager', 'All by job title'],
+                },
+            ])
+        console.log(getChoice);
+        console.log(getChoice.viewemp);
+        const viewemp = getChoice.viewemp;
+        console.log("view emp line 50:", viewemp);
+        let query;
+        switch (viewemp) {
+            case 'All employees':
+                console.log("all employees case")
+                query = 'SELECT * FROM employee'
+                break;
+
+            case 'All by manager':
+                console.log("by manager case")
+                query = 'SELECT * FROM employee GROUP BY manager'
+                break;
+
+            case 'All by Job title':
+                console.log("by job title case")
+                query = 'SELECT * FROM employee GROUP BY manager'
+                break;
+
+            default:
+                console.log(`Invalid action: cannot view all employees by that method`);
+        }
+        connection.query(query, async (err, res) => {
+            if (err) throw err;
+            await console.table(res);
+            welcome();
+        });
+    } catch (error) {
+        console.log(error)
+    }
+
+};
+
+const deleteRecord = async () => {
+    try {
+        const getChoice = await inquirer
+            .prompt([
+                {
+                    name: 'deletetype',
+                    type: 'list',
+                    message: 'What would you like to delete?',
+                    choices: ['Employee record', 'Roles', 'Department',],
+                },
+                {
+                    name: 'deletewhat',
+                    type: 'input',
+                    message: 'Enter the employee id, role title, or department name you would like to delete.'
+                },
+            ])
+        console.log("delete choice:", getChoice);
+        const deleteWhat = getChoice.deletewhat;
+        const deleteType = getChoice.deletetype;
+        let query;
+        switch (deleteType) {
+            case 'Employee record':
+                query = `DELETE FROM employee WHERE id = ${deleteWhat}`
+                break;
+
+            case 'Roles':
+                query = `DELETE FROM roles WHERE title = ${deleteWhat}`
+                break;
+
+            case 'Department':
+                query = `DELETE FROM department WHERE dept_name = ${deleteWhat}`
+                break;
+
+            default:
+                console.log(`Invalid action: cannot delete ${deleteType} by that method`);
+
+        };
+        console.log(query);
+        connection.query(query,
+            async (err, res) => {
+                if (err) throw err;
+                await console.table(`${res.affectedRows} record deleted!\n`);
+                 welcome();
+            });
+    } catch (error) {
+        console.log(error)
+    }
 
 };
 
 
-
-connection.connect((err) => {
-    //    time permitting enter graphic
-    if (err) throw err;
-    console.log(`connected as id ${connection.threadId}\n`);
-    const query = `SELECT employee.id, employee.first_name, employee.last_name, employee.manager, roles.title, roles.salary, department.dept_name
-    FROM((roles INNER JOIN employee ON roles.title = employee.job_title)
-     INNER JOIN department ON roles.department = department.dept_name)`
-
-    connection.query(query, async (err, res) => {
-        if (err) throw err;
-        await console.table(res);
-        await welcome();
-    });
-
-});
